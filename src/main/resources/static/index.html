@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management System</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 800px; margin: auto; }
+        form { margin-bottom: 30px; padding: 20px; border: 1px solid #ccc; border-radius: 5px; }
+        input, select { margin-bottom: 15px; width: 100%; padding: 10px; box-sizing: border-box; }
+        button { padding: 10px 15px; background-color: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Student Registration Form</h2>
+    <form id="studentForm">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+        
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+        
+        <label for="course">Course:</label>
+        <input type="text" id="course" name="course" required>
+        
+        <button type="submit">Submit</button>
+    </form>
+
+    <h2>Student List</h2>
+    <table id="studentTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Course</th>
+            </tr>
+        </thead>
+        <tbody id="studentTableBody">
+            </tbody>
+    </table>
+</div>
+
+<script>
+    // 1. Fetch data from the database when the page loads [cite: 64]
+    document.addEventListener('DOMContentLoaded', fetchStudents);
+
+    function fetchStudents() {
+        // Calls the GET /api/students endpoint [cite: 92]
+        fetch('/api/students')
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('studentTableBody');
+                tableBody.innerHTML = ''; // Clear existing rows
+                
+                // Populate table with data
+                data.forEach(student => {
+                    const row = `<tr>
+                        <td>${student.id}</td>
+                        <td>${student.name}</td>
+                        <td>${student.email}</td>
+                        <td>${student.course}</td>
+                    </tr>`;
+                    tableBody.innerHTML += row;
+                });
+            })
+            .catch(error => console.error('Error fetching students:', error));
+    }
+
+    // 2. Handle the submit button click to add a new student [cite: 56]
+    document.getElementById('studentForm').addEventListener('submit', function(event) {
+        event.preventDefault(); // Prevents the default hard-reload of the browser
+
+        // Gather data from the form
+        const studentData = {
+            name: document.getElementById('name').value,
+            email: document.getElementById('email').value,
+            course: document.getElementById('course').value
+        };
+
+        // Calls the POST /api/students endpoint [cite: 90]
+        fetch('/api/students', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(studentData)
+        })
+        .then(async response => {
+            if (response.ok) {
+                // Clear the form fields
+                document.getElementById('studentForm').reset();
+                
+                // Refresh the table so the newly added student appears [cite: 58, 59, 65]
+                fetchStudents(); 
+            } else {
+                // If validation fails or duplicate email exists, show the error
+                const errorMessage = await response.text();
+                alert(errorMessage);
+            }
+        })
+        .catch(error => console.error('Error saving student:', error));
+    });
+</script>
+
+</body>
+</html>
